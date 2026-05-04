@@ -98,7 +98,7 @@ class LoginSerializer(serializers.Serializer):
 
         authenticated_user = authenticate(username=email, password=password)
         if authenticated_user is None:
-            raise serializers.ValidationError({'detail': 'Falsches Passwort.'})
+            raise serializers.ValidationError({'detail': INVALID_CREDENTIALS_MSG})
 
         refresh = RefreshToken.for_user(authenticated_user)
         self.user = authenticated_user

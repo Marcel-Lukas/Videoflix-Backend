@@ -17,8 +17,8 @@ class RegisterViewTests(APITestCase):
 
     url = reverse('register')
 
-    @patch('auth_app.api.serializers.job_send_activation_mail')
-    def test_register_success(self, mocked_mail):
+    @patch('auth_app.api.views.django_rq.enqueue')
+    def test_register_success(self, mocked_enqueue):
         payload = {
             'email': TEST_EMAIL,
             'password': TEST_PASSWORD,
@@ -29,14 +29,14 @@ class RegisterViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['user']['email'], TEST_EMAIL)
-        self.assertIn('token', response.data)
+        self.assertNotIn('token', response.data)
 
         user = User.objects.get(email=TEST_EMAIL)
         self.assertFalse(user.is_active)
-        mocked_mail.assert_called_once()
+        mocked_enqueue.assert_called_once()
 
-    @patch('auth_app.api.serializers.job_send_activation_mail')
-    def test_register_password_mismatch(self, mocked_mail):
+    @patch('auth_app.api.views.django_rq.enqueue')
+    def test_register_password_mismatch(self, mocked_enqueue):
         payload = {
             'email': TEST_EMAIL,
             'password': TEST_PASSWORD,
@@ -48,10 +48,10 @@ class RegisterViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('confirmed_password', response.data)
         self.assertFalse(User.objects.filter(email=TEST_EMAIL).exists())
-        mocked_mail.assert_not_called()
+        mocked_enqueue.assert_not_called()
 
-    @patch('auth_app.api.serializers.job_send_activation_mail')
-    def test_register_email_already_exists(self, mocked_mail):
+    @patch('auth_app.api.views.django_rq.enqueue')
+    def test_register_email_already_exists(self, mocked_enqueue):
         make_user()
         payload = {
             'email': TEST_EMAIL,
@@ -63,7 +63,7 @@ class RegisterViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('email', response.data)
-        mocked_mail.assert_not_called()
+        mocked_enqueue.assert_not_called()
 
     def test_register_missing_email(self):
         payload = {

@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from auth_app.tasks import job_send_reset_password_mail
+from auth_app.tasks import job_send_activation_mail, job_send_reset_password_mail
 
 from .serializers import (
     LoginSerializer,
@@ -61,11 +61,15 @@ class RegisterView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         user = serializer.save()
+
+        activation_link = (
+            f'{settings.FRONTEND_URL}/pages/auth/activate.html'
+            f'?uid={user.activation_uid}&token={user.activation_token}'
+        )
+        django_rq.enqueue(job_send_activation_mail, user.email, activation_link)
+
         return Response(
-            {
-                'user': {'id': user.id, 'email': user.email},
-                'token': user.activation_token,
-            },
+            {'user': {'id': user.id, 'email': user.email}},
             status=status.HTTP_201_CREATED,
         )
 

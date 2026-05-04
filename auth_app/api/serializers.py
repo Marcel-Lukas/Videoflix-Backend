@@ -1,6 +1,5 @@
 """Serializers for the auth_app API."""
 
-from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
@@ -10,8 +9,6 @@ from django.utils.http import urlsafe_base64_encode
 
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
-
-from auth_app.tasks import job_send_activation_mail
 
 
 User = get_user_model()
@@ -57,21 +54,10 @@ class RegisterSerializer(serializers.ModelSerializer):
             is_active=False,
         )
 
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        token = default_token_generator.make_token(user)
-
-        # Attach to the instance so the view can return them in the response.
-        user.activation_token = token
-        user.activation_uid = uid
-
-        activation_link = (
-            f'{settings.FRONTEND_URL}/pages/auth/activate.html'
-            f'?uid={uid}&token={token}'
-        )
-        try:
-            job_send_activation_mail(user.email, activation_link)
-        except Exception as exc:
-            print(f'Mail-Fehler: {exc}')
+        # Attach uid/token to the instance so the view can build the
+        # activation link and enqueue the mail job.
+        user.activation_uid = urlsafe_base64_encode(force_bytes(user.pk))
+        user.activation_token = default_token_generator.make_token(user)
 
         return user
 

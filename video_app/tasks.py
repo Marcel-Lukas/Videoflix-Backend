@@ -19,10 +19,10 @@ def _run_ffmpeg(args):
 
 
 def create_thumbnail(video_path, thumbnail_path):
-    """Extract a single-frame thumbnail at ~30 seconds (fast seek)."""
+    """Extract a single-frame thumbnail at ~20 seconds (fast seek)."""
     _run_ffmpeg([
         '-y',
-        '-ss', '00:00:30',
+        '-ss', '00:00:20',
         '-i', video_path,
         '-vframes', '1',
         thumbnail_path,

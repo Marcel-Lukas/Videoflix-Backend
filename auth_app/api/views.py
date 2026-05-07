@@ -69,7 +69,10 @@ class RegisterView(APIView):
         django_rq.enqueue(job_send_activation_mail, user.email, activation_link)
 
         return Response(
-            {'user': {'id': user.id, 'email': user.email}},
+            {
+                'user': {'id': user.id, 'email': user.email},
+                'token': user.activation_token,
+            },
             status=status.HTTP_201_CREATED,
         )
 

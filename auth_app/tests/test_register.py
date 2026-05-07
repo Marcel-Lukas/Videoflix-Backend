@@ -29,7 +29,8 @@ class RegisterViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['user']['email'], TEST_EMAIL)
-        self.assertNotIn('token', response.data)
+        self.assertIn('token', response.data)
+        self.assertTrue(response.data['token'])
 
         user = User.objects.get(email=TEST_EMAIL)
         self.assertFalse(user.is_active)

@@ -22,6 +22,7 @@ class Video(models.Model):
         FANTASY = 'fantasy', 'Fantasy'
         KIDS = 'kids', 'Kids'
         HORROR = 'horror', 'Horror'
+        MUSIC = 'music', 'Music'
         MYSTERY = 'mystery', 'Mystery'
         ROMANCE = 'romance', 'Romance'
         SCI_FI = 'sci-fi', 'Sci-Fi'

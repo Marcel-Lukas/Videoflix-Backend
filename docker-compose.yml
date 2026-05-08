@@ -1,7 +1,7 @@
 services:
 
   db:
-    image: postgres:latest
+    image: postgres:17.9
     container_name: videoflix_database
     environment:
       POSTGRES_DB: ${DB_NAME}
@@ -11,7 +11,7 @@ services:
       - postgres_data:/var/lib/postgresql
 
   redis:
-    image: redis:latest
+    image: redis:8.2.6
     container_name: videoflix_redis
     volumes:
       - redis_data:/data

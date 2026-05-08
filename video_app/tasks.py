@@ -45,7 +45,7 @@ def convert_to_hls(video_path, output_path, resolution):
 
 def _generate_thumbnail(video):
     """Create the thumbnail file for `video` and persist its relative path."""
-    rel_path = os.path.join(THUMBNAIL_DIRNAME, f'thumb_{video.id}.jpg')
+    rel_path = os.path.join(THUMBNAIL_DIRNAME, f'thumbnail-{video.id}.jpg')
     full_path = os.path.join(settings.MEDIA_ROOT, rel_path)
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     create_thumbnail(video.video_file.path, full_path)

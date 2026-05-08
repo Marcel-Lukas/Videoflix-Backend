@@ -1,5 +1,3 @@
-"""Serializers for the auth_app API."""
-
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.tokens import default_token_generator
@@ -31,11 +29,13 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
     def validate_email(self, value):
+        """Reject the email if it is already registered."""
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(INVALID_CREDENTIALS_MSG)
         return value
 
     def validate(self, attrs):
+        """Ensure both password fields match."""
         if attrs.get('password') != attrs.get('confirmed_password'):
             raise serializers.ValidationError(
                 {'confirmed_password': PASSWORDS_DO_NOT_MATCH_MSG}
@@ -43,6 +43,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        """Create an inactive user and attach uid/token for the activation link."""
         validated_data.pop('confirmed_password', None)
         email = validated_data['email']
         password = validated_data['password']
@@ -54,8 +55,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             is_active=False,
         )
 
-        # Attach uid/token to the instance so the view can build the
-        # activation link and enqueue the mail job.
         user.activation_uid = urlsafe_base64_encode(force_bytes(user.pk))
         user.activation_token = default_token_generator.make_token(user)
 
@@ -69,6 +68,7 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
+        """Authenticate the user and return access/refresh token strings."""
         email = attrs['email']
         password = attrs['password']
 
@@ -107,6 +107,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     confirm_password = serializers.CharField(write_only=True, min_length=8)
 
     def validate(self, attrs):
+        """Check that both passwords match and satisfy Django's password validators."""
         if attrs['new_password'] != attrs['confirm_password']:
             raise serializers.ValidationError(
                 {'confirm_password': 'Die Passwörter stimmen nicht überein.'}

@@ -56,6 +56,7 @@ class RegisterView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """Create user, send activation e-mail, return user data and token."""
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -83,6 +84,7 @@ class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
+        """Validate credentials, set access and refresh cookies."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -105,6 +107,7 @@ class RefreshTokenView(TokenRefreshView):
     """Refresh the access token using the refresh token cookie."""
 
     def post(self, request, *args, **kwargs):
+        """Read refresh cookie, issue a new access token, and update the cookie."""
         refresh_token = request.COOKIES.get(REFRESH_COOKIE)
         if not refresh_token:
             return Response(
@@ -135,6 +138,7 @@ class LogoutView(APIView):
     """Blacklist the refresh token and clear authentication cookies."""
 
     def post(self, request):
+        """Blacklist the refresh token and delete auth cookies."""
         refresh_token = request.COOKIES.get(REFRESH_COOKIE)
         if not refresh_token:
             return Response(
@@ -166,6 +170,7 @@ class ActivateAccountView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
+        """Decode uid, verify token, and mark the user account as active."""
         user = _decode_user_from_uid(uidb64)
         if user is None:
             return Response(
@@ -191,6 +196,7 @@ class PasswordResetRequestView(APIView):
     """Send a password reset e-mail if a matching active user exists."""
 
     def post(self, request):
+        """Look up active user by email and enqueue a password-reset mail."""
         serializer = PasswordResetRequestSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -217,6 +223,7 @@ class PasswordResetConfirmView(APIView):
     """Validate a reset token and set the new password."""
 
     def post(self, request, uidb64, token):
+        """Verify reset token and update the user's password."""
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 

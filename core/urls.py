@@ -24,6 +24,8 @@ urlpatterns = [
     path('api/', include('auth_app.api.urls')),
     path('api/', include('video_app.api.urls')),
     path('django-rq/', include('django_rq.urls')),
+
+    # Serve user-uploaded media files directly via Django during development.
     re_path(
         r'^media/(?P<path>.*)$',
         serve,

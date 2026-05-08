@@ -46,6 +46,7 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", default="webmaster@loc
 FRONTEND_URL = os.environ.get("FRONTEND_URL", default="http://localhost:4200")
 
 
+# Allow the frontend (dev servers) to send credentialed cross-origin requests (cookies).
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
@@ -118,6 +119,7 @@ DATABASES = {
     }
 }
 
+# Redis-backed cache used for caching API responses and session data.
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -129,6 +131,7 @@ CACHES = {
     }
 }
 
+# Redis Queue configuration for background jobs (e.g. sending emails, video processing).
 RQ_QUEUES = {
     'default': {
         'HOST': os.environ.get("REDIS_HOST", default="redis"),
@@ -189,6 +192,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
+# Use JWT authentication for all API endpoints by default.
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -196,6 +200,7 @@ REST_FRAMEWORK = {
 }
 
 
+# JWT token lifetimes; refresh tokens are rotated and blacklisted after use.
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),

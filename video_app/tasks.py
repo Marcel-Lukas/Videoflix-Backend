@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from django.conf import settings
 
@@ -11,6 +12,8 @@ HLS_RESOLUTIONS = (480, 720, 1080)
 HLS_DIRNAME = 'hls'
 THUMBNAIL_DIRNAME = 'thumbnails'
 MANIFEST_NAME = 'index.m3u8'
+# One worker per rendition plus the thumbnail job.
+_MAX_CONVERSION_WORKERS = len(HLS_RESOLUTIONS) + 1
 
 
 def _run_ffmpeg(args):
@@ -71,15 +74,47 @@ def _generate_thumbnail(video):
     video.save(update_fields=['thumbnail_url'])
 
 
-def _generate_hls_renditions(video):
-    """Produce HLS renditions for all configured resolutions."""
-    for resolution in HLS_RESOLUTIONS:
-        output_dir = os.path.join(
-            settings.MEDIA_ROOT, HLS_DIRNAME, str(video.id), f'{resolution}p'
-        )
-        os.makedirs(output_dir, exist_ok=True)
-        output_path = os.path.join(output_dir, MANIFEST_NAME)
-        convert_to_hls(video.video_file.path, output_path, resolution)
+def _generate_hls_rendition(video, resolution):
+    """Produce a single HLS rendition for `resolution`."""
+    output_dir = os.path.join(
+        settings.MEDIA_ROOT, HLS_DIRNAME, str(video.id), f'{resolution}p'
+    )
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, MANIFEST_NAME)
+    convert_to_hls(video.video_file.path, output_path, resolution)
+
+
+def _run_conversion_jobs(video):
+    """Run thumbnail and all HLS renditions concurrently.
+
+    Each ffmpeg invocation is its own OS process, so threads suffice to
+    parallelise the work and use multiple CPU cores at once.
+    Raises the first exception encountered after all jobs have been awaited.
+    """
+    jobs = [('thumbnail', _generate_thumbnail, (video,))]
+    jobs.extend(
+        (f'hls-{r}p', _generate_hls_rendition, (video, r))
+        for r in HLS_RESOLUTIONS
+    )
+
+    with ThreadPoolExecutor(max_workers=_MAX_CONVERSION_WORKERS) as pool:
+        future_to_name = {
+            pool.submit(fn, *args): name for name, fn, args in jobs
+        }
+        first_error = None
+        for future in as_completed(future_to_name):
+            name = future_to_name[future]
+            try:
+                future.result()
+            except Exception as exc:  # noqa: BLE001 - re-raised below
+                logger.exception(
+                    'Conversion job %s failed for video %s', name, video.id
+                )
+                if first_error is None:
+                    first_error = exc
+
+    if first_error is not None:
+        raise first_error
 
 
 def convert_and_save(video_id):
@@ -93,8 +128,7 @@ def convert_and_save(video_id):
         return
 
     try:
-        _generate_thumbnail(video)
-        _generate_hls_renditions(video)
+        _run_conversion_jobs(video)
     except (subprocess.CalledProcessError, OSError):
         logger.exception('Conversion failed for video %s', video_id)
         video.conversion_status = Video.ConversionStatus.FAILED

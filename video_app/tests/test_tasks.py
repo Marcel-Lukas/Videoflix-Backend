@@ -4,7 +4,7 @@ import os
 import subprocess
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 
 from video_app import tasks
 from video_app.models import Video
@@ -21,7 +21,7 @@ def _fake_ffmpeg(args):
         fh.write(b'fake-ffmpeg-output')
 
 
-class ConvertAndSaveTests(MediaRootMixin, TestCase):
+class ConvertAndSaveTests(MediaRootMixin, TransactionTestCase):
     """End-to-end behaviour of the ``convert_and_save`` RQ task."""
 
     _media_prefix = 'videoflix-tasks-'
@@ -29,7 +29,8 @@ class ConvertAndSaveTests(MediaRootMixin, TestCase):
     def test_success_marks_video_ready_and_creates_files(self):
         video = make_video()
 
-        with patch('video_app.tasks._run_ffmpeg', side_effect=_fake_ffmpeg):
+        with patch('video_app.tasks._run_ffmpeg', side_effect=_fake_ffmpeg), \
+                patch('video_app.tasks._get_video_duration', return_value=10.0):
             tasks.convert_and_save(video.pk)
 
         video.refresh_from_db()

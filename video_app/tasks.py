@@ -18,11 +18,29 @@ def _run_ffmpeg(args):
     subprocess.run(['ffmpeg', *args], check=True)
 
 
+def _get_video_duration(video_path):
+    """Return the duration of the video in seconds as a float."""
+    result = subprocess.run(
+        [
+            'ffprobe', '-v', 'error',
+            '-show_entries', 'format=duration',
+            '-of', 'default=noprint_wrappers=1:nokey=1',
+            video_path,
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return float(result.stdout.strip())
+
+
 def create_thumbnail(video_path, thumbnail_path):
-    """Extract a single-frame thumbnail at ~20 seconds (fast seek)."""
+    """Extract a single-frame thumbnail at one quarter of the video duration."""
+    duration = _get_video_duration(video_path)
+    seek = duration / 4
     _run_ffmpeg([
         '-y',
-        '-ss', '00:00:20',
+        '-ss', str(seek),
         '-i', video_path,
         '-vframes', '1',
         thumbnail_path,

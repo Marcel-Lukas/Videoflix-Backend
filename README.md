@@ -1,11 +1,5 @@
 # Backend – Videoflix Streaming Platform
 
-![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
-![Django](https://img.shields.io/badge/django-6.0-092E20?logo=django&logoColor=white)
-![DRF](https://img.shields.io/badge/DRF-3.17-red?logo=django&logoColor=white)
-
-![Videoflix Logo](static/videoflix/images/logo_icon.svg)
-
 This Videoflix backend was developed as part of a learning project to strengthen
 backend development skills. It powers a Netflix-style video streaming platform
 and is designed to work seamlessly with an existing frontend. The application
@@ -13,7 +7,11 @@ provides a RESTful API with JWT-based authentication via HTTP-only cookies, an
 asynchronous video processing pipeline (FFmpeg → HLS) backed by Redis Queue,
 and adaptive bitrate streaming in 480p, 720p and 1080p.
 
-The corresponding frontend repository can be found here: <a href="https://github.com/Developer-Akademie-Backendkurs/project.Videoflix" target="_blank">Videoflix Frontend</a>
+![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/django-6.0-092E20?logo=django&logoColor=white)
+![DRF](https://img.shields.io/badge/DRF-3.17-red?logo=django&logoColor=white)
+
+The corresponding frontend repository can be found here:  [Videoflix Frontend](https://github.com/Developer-Akademie-Backendkurs/project.Videoflix)
 
 ---
 

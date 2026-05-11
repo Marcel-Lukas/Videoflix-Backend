@@ -295,8 +295,8 @@ client in the response body — they are stored in **HTTP-only cookies** instead
 
 | Cookie | Lifetime | Purpose |
 | --- | --- | --- |
-| `access_token` | 15 minutes | Sent automatically on every request |
-| `refresh_token` | 7 days | Used by `/api/token/refresh/` to obtain a new access token |
+| `access_token` | 120 minutes | Sent automatically on every request |
+| `refresh_token` | 1 days | Used by `/api/token/refresh/` to obtain a new access token |
 
 Cookies are flagged `HttpOnly`, `Secure`, `SameSite=None` so they can be used
 from the frontend across origins. On logout, the refresh token is added to the

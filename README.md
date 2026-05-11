@@ -1,5 +1,9 @@
 # Backend – Videoflix Streaming Platform
 
+![Python](https://img.shields.io/badge/python-3.12-blue?logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/django-6.0-092E20?logo=django&logoColor=white)
+![DRF](https://img.shields.io/badge/DRF-3.17-red?logo=django&logoColor=white)
+
 This Videoflix backend was developed as part of a learning project to strengthen
 backend development skills. It powers a Netflix-style video streaming platform
 and is designed to work seamlessly with an existing frontend. The application
@@ -495,16 +499,6 @@ python manage.py test auth_app.tests.test_login --settings=core.test_settings -v
 ---
 
 ## 🩺 Troubleshooting
-
-### `ModuleNotFoundError: No module named 'django'`
-
-Virtual environment not activated or dependencies missing:
-
-```bash
-source .venv/bin/activate     # Linux / macOS
-.venv\Scripts\activate        # Windows
-pip install -r requirements.txt
-```
 
 ### `pg_isready` keeps looping in the container
 

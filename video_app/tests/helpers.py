@@ -63,8 +63,15 @@ def make_video(**overrides):
     do not depend on Redis or ffmpeg, and we run the queued commit
     callbacks manually because ``TestCase`` wraps each test in an atomic
     block that never commits.
+
+    Pass ``conversion_status=Video.ConversionStatus.READY`` (or any other
+    status) to override the status that the signal leaves on the video.
     """
     from django.db import connection
+
+    # Pull out conversion_status before passing to create() so the signal
+    # does not stomp on it; we apply it as a final update below.
+    final_status = overrides.pop('conversion_status', None)
 
     defaults = {
         'title': VIDEO_TITLE,
@@ -80,6 +87,10 @@ def make_video(**overrides):
         del connection.run_on_commit[start:]
         for hook in pending:
             hook[1]()
+
+    if final_status is not None:
+        Video.objects.filter(pk=video.pk).update(conversion_status=final_status)
+
     video.refresh_from_db()
     return video
 

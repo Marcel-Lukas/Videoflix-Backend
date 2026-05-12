@@ -5,6 +5,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
+from video_app.models import Video
+
 from .helpers import MediaRootMixin, authenticate, make_user, make_video
 
 
@@ -24,8 +26,8 @@ class VideoListViewTests(MediaRootMixin, APITestCase):
     def test_returns_videos_for_authenticated_user(self):
         user = make_user()
         authenticate(self.client, user)
-        first = make_video(title='Older')
-        second = make_video(title='Newer')
+        first = make_video(title='Older', conversion_status=Video.ConversionStatus.READY)
+        second = make_video(title='Newer', conversion_status=Video.ConversionStatus.READY)
 
         response = self.client.get(self.url)
 

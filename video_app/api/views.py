@@ -38,7 +38,9 @@ class VideoListView(ListAPIView):
     permission_classes = [IsAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
     serializer_class = VideoSerializer
-    queryset = Video.objects.all()
+    queryset = Video.objects.filter(
+        conversion_status=Video.ConversionStatus.READY
+    )
 
 
 class HlsBaseView(APIView):

@@ -40,4 +40,8 @@ EOF
 
 python manage.py rqworker default &
 
-exec gunicorn core.wsgi:application --bind 0.0.0.0:8000 --reload
+# Generous worker timeout so large video uploads are not killed mid-request.
+exec gunicorn core.wsgi:application \
+    --bind 0.0.0.0:8000 \
+    --timeout 120 \
+    --reload

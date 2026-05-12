@@ -115,7 +115,11 @@ DATABASES = {
         "USER": os.environ.get("DB_USER", default="videoflix_user"),
         "PASSWORD": os.environ.get("DB_PASSWORD", default="supersecretpassword"),
         "HOST": os.environ.get("DB_HOST", default="db"),
-        "PORT": os.environ.get("DB_PORT", default=5432)
+        "PORT": os.environ.get("DB_PORT", default=5432),
+        # Wrap every request in a transaction so ``transaction.on_commit``
+        # callbacks (e.g. the post-save signal enqueuing the conversion job)
+        # only fire after the response data has been written.
+        "ATOMIC_REQUESTS": True,
     }
 }
 
@@ -125,7 +129,10 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": os.environ.get("REDIS_LOCATION", default="redis://redis:6379/1"),
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # Fail fast instead of hanging the request thread if Redis is down.
+            "SOCKET_CONNECT_TIMEOUT": 3,
+            "SOCKET_TIMEOUT": 3,
         },
         "KEY_PREFIX": "videoflix"
     }
@@ -138,7 +145,12 @@ RQ_QUEUES = {
         'PORT': os.environ.get("REDIS_PORT", default=6379),
         'DB': os.environ.get("REDIS_DB", default=0),
         'DEFAULT_TIMEOUT': 900,
-        'REDIS_CLIENT_KWARGS': {},
+        # Bound the time a hanging Redis broker can block an enqueue call
+        # made from the request thread.
+        'REDIS_CLIENT_KWARGS': {
+            'socket_connect_timeout': 3,
+            'socket_timeout': 3,
+        },
     },
 }
 

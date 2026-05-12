@@ -58,9 +58,14 @@ def make_video_file(name=DUMMY_VIDEO_NAME, content=DUMMY_VIDEO_BYTES):
 def make_video(**overrides):
     """Create a ``Video`` without triggering the real conversion task.
 
-    The ``post_save`` signal enqueues the conversion job; we patch
-    ``django_rq.enqueue`` so test runs do not depend on Redis or ffmpeg.
+    The ``post_save`` signal enqueues the conversion job via
+    ``transaction.on_commit``; we patch ``django_rq.enqueue`` so test runs
+    do not depend on Redis or ffmpeg, and we run the queued commit
+    callbacks manually because ``TestCase`` wraps each test in an atomic
+    block that never commits.
     """
+    from django.db import connection
+
     defaults = {
         'title': VIDEO_TITLE,
         'description': VIDEO_DESCRIPTION,
@@ -69,7 +74,14 @@ def make_video(**overrides):
     }
     defaults.update(overrides)
     with patch('video_app.signals.django_rq.enqueue'):
-        return Video.objects.create(**defaults)
+        start = len(connection.run_on_commit)
+        video = Video.objects.create(**defaults)
+        pending = connection.run_on_commit[start:]
+        del connection.run_on_commit[start:]
+        for hook in pending:
+            hook[1]()
+    video.refresh_from_db()
+    return video
 
 
 def temp_media_root():

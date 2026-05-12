@@ -17,12 +17,15 @@ def enqueue_conversion_on_create(sender, instance, created, **kwargs):
     if not created:
         return
 
-    Video.objects.filter(pk=instance.pk).update(
+    transaction.on_commit(lambda: _enqueue_conversion(instance.pk))
+
+
+def _enqueue_conversion(video_id):
+    """Flag the video as processing and hand the job off to the worker."""
+    Video.objects.filter(pk=video_id).update(
         conversion_status=Video.ConversionStatus.PROCESSING
     )
-    transaction.on_commit(
-        lambda: django_rq.enqueue(convert_and_save, instance.pk)
-    )
+    django_rq.enqueue(convert_and_save, video_id)
 
 
 @receiver(post_delete, sender=Video)

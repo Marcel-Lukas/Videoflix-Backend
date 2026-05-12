@@ -32,7 +32,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = os.environ.get("DEBUG", default="True") == "True"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", default="localhost").split(",")
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", default="http://localhost:4200").split(",")
+CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", default="http://localhost:5500").split(",")
 
 # Email configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -43,7 +43,7 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", default="True").lower() == "true"
 EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", default="False").lower() == "true"
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", default="webmaster@localhost")
-FRONTEND_URL = os.environ.get("FRONTEND_URL", default="http://localhost:4200")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", default="http://localhost:5500")
 
 
 # Allow the frontend (dev servers) to send credentialed cross-origin requests (cookies).

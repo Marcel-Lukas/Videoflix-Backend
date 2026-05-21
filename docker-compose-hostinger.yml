@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:17.9
+    container_name: videoflix_database
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - backend
+
+  redis:
+    image: redis:8.2.6
+    container_name: videoflix_redis
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+
+  web:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    env_file: .env
+    container_name: videoflix_backend
+    volumes:
+      - .:/app
+      - videoflix_media:/app/media
+      - videoflix_static:/app/static
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - db
+      - redis
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.videoflix.rule=Host(`videoflix.backend.marcel-lukas.com`)
+      - traefik.http.routers.videoflix.entrypoints=websecure
+      - traefik.http.routers.videoflix.tls.certresolver=letsencrypt
+      - traefik.http.services.videoflix.loadbalancer.server.port=8000
+    networks:
+      - backend
+      - traefik-proxy
+
+volumes:
+  postgres_data:
+  redis_data:
+  videoflix_media:
+  videoflix_static:
+
+networks:
+  backend:
+  traefik-proxy:
+    external: true

@@ -49,10 +49,7 @@ FRONTEND_URL = os.environ.get("FRONTEND_URL", default="http://localhost:5500")
 # Allow the frontend (dev servers) to send credentialed cross-origin requests (cookies).
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = [
-    "http://127.0.0.1:5500",
-    "http://localhost:5500",
-    "http://127.0.0.1:4200",
-    "http://localhost:4200",
+    "https://videoflix.marcel-lukas.com",
 ]
 
 # Application definition

@@ -11,7 +11,6 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -126,22 +125,17 @@ class RefreshTokenView(TokenRefreshView):
             )
 
         access_token = serializer.validated_data.get('access')
-        new_refresh_token = serializer.validated_data.get('refresh')
 
         response = Response(
             {'detail': 'Token refreshed', 'access': str(access_token)},
             status=status.HTTP_200_OK,
         )
         _set_auth_cookie(response, ACCESS_COOKIE, access_token)
-        if new_refresh_token is not None:
-            _set_auth_cookie(response, REFRESH_COOKIE, new_refresh_token)
         return response
 
 
 class LogoutView(APIView):
     """Blacklist the refresh token and clear authentication cookies."""
-
-    permission_classes = [AllowAny]
 
     def post(self, request):
         """Blacklist the refresh token and delete auth cookies."""
@@ -162,10 +156,8 @@ class LogoutView(APIView):
             status=status.HTTP_200_OK,
         )
 
-        try:
-            RefreshToken(refresh_token).blacklist()
-        except TokenError:
-            pass
+        token = RefreshToken(refresh_token)
+        token.blacklist()
 
         response.delete_cookie(ACCESS_COOKIE)
         response.delete_cookie(REFRESH_COOKIE)

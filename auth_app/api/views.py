@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.core.exceptions import ObjectDoesNotExist
+from django.middleware.csrf import get_token
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
@@ -11,6 +12,7 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -100,6 +102,9 @@ class LoginView(TokenObtainPairView):
         })
         _set_auth_cookie(response, ACCESS_COOKIE, access)
         _set_auth_cookie(response, REFRESH_COOKIE, refresh)
+        # Ensure a ``csrftoken`` cookie is set so the frontend logout flow,
+        # which reads ``document.cookie`` for the CSRF token, never throws.
+        get_token(request)
         return response
 
 
@@ -137,6 +142,10 @@ class RefreshTokenView(TokenRefreshView):
 class LogoutView(APIView):
     """Blacklist the refresh token and clear authentication cookies."""
 
+    # Allow logout even when the access token has expired so the refresh
+    # token can still be blacklisted and cookies cleared on the client.
+    permission_classes = [AllowAny]
+
     def post(self, request):
         """Blacklist the refresh token and delete auth cookies."""
         refresh_token = request.COOKIES.get(REFRESH_COOKIE)
@@ -156,8 +165,11 @@ class LogoutView(APIView):
             status=status.HTTP_200_OK,
         )
 
-        token = RefreshToken(refresh_token)
-        token.blacklist()
+        try:
+            RefreshToken(refresh_token).blacklist()
+        except TokenError:
+            # Token already invalid/blacklisted -- still clear cookies below.
+            pass
 
         response.delete_cookie(ACCESS_COOKIE)
         response.delete_cookie(REFRESH_COOKIE)
